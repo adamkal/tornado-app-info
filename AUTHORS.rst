@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* Adam Kaliński <adamkalinski@gmail.com>
+* Adam Kaliński <adam.kalinski@amsterdam-standard.pl>
 
 Contributors
 ------------
