@@ -1,6 +1,10 @@
 """Test App Info handler."""
 import json
-from unittest import mock
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
@@ -23,7 +27,7 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
         TestApp.info_collectors['version'].side_effect = ("v1", "v2")
         TestApp.info_collectors['deploy_time'].side_effect = ("11.11.2011",
                                                               "12.12.2012")
-        super().setUp()
+        super(InfoHandlerTestCase, self).setUp()
 
     def get_app(self):
         return TestApp([

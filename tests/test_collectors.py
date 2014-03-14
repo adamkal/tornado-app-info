@@ -1,29 +1,44 @@
 """Collectors tests."""
 import unittest
-import unittest.mock
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 from datetime import datetime
 
+import six
 from tornadoappinfo import collectors
+
+if six.PY2:
+    import time
+
+    def to_timestamp(dt):
+        return time.mktime(dt.timetuple())
+else:
+    def to_timestamp(dt):
+        return dt.timestamp()
 
 
 class CollectorsTestCase(unittest.TestCase):
 
-    @unittest.mock.patch("tornadoappinfo.collectors.datetime")
+    @mock.patch("tornadoappinfo.collectors.datetime")
     def test_app_load_time(self, mck_datetime):
         mck_datetime.datetime.now.return_value = datetime(2014, 1, 1, 1, 1, 1)
 
         value = collectors.app_load_time()
         self.assertEqual(value, "2014-01-01T01:01:01")
 
-    @unittest.mock.patch("tornadoappinfo.collectors._head_info")
-    @unittest.mock.patch("tornadoappinfo.collectors._current_branch")
+    @mock.patch("tornadoappinfo.collectors._head_info")
+    @mock.patch("tornadoappinfo.collectors._current_branch")
     def test_git_state(self, current_branch, head_info):
         current_branch.return_value = "master"
         head_info.return_value = (
             "abcd1234def",
             "Kamilek",
             "message",
-            int(datetime(2014, 2, 2, 2, 2, 2).timestamp()))
+            int(to_timestamp(datetime(2014, 2, 2, 2, 2, 2))))
 
         result = collectors.git_state()
 

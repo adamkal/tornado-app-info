@@ -9,7 +9,11 @@ Tests for `tornadoappinfo` module.
 """
 
 import unittest
-import unittest.mock
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from tornado.web import Application as TornadoApplication
 from tornadoappinfo import application
@@ -18,7 +22,7 @@ from tornadoappinfo import application
 class TestApp(application.VersionMixin, TornadoApplication):
 
     info_collectors = {
-        'version': unittest.mock.MagicMock()
+        'version': mock.MagicMock()
     }
 
 

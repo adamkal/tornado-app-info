@@ -17,6 +17,13 @@ if sys.argv[-1] == 'publish':
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
+requirements = []
+
+try:
+    import unittest.mock
+except ImportError:
+    requirements.append('mock')
+
 setup(
     name='tornadoappinfo',
     version='0.1.0',
@@ -33,8 +40,7 @@ setup(
     ],
     package_dir={'tornadoappinfo': 'tornadoappinfo'},
     include_package_data=True,
-    install_requires=[
-    ],
+    install_requires=requirements,
     license="MIT",
     zip_safe=False,
     keywords='tornadoappinfo',
