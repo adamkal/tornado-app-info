@@ -9,20 +9,37 @@ Tests for `tornadoappinfo` module.
 """
 
 import unittest
+import unittest.mock
 
-from tornadoappinfo import tornadoappinfo
+from tornado.web import Application as TornadoApplication
+from tornadoappinfo import application
 
 
-class TestTornadoappinfo(unittest.TestCase):
+class TestApp(application.VersionMixin, TornadoApplication):
 
-    def setUp(self):
-        pass
+    info_collectors = {
+        'version': unittest.mock.MagicMock()
+    }
 
-    def test_something(self):
-        pass
 
-    def tearDown(self):
-        pass
+class VersionMixinTestCase(unittest.TestCase):
+
+    def test_collect_info(self):
+        Application = TestApp
+
+        Application.info_collectors['version'].side_effect = ["v1", "v2"]
+
+        app = Application()
+
+        # this should return the version loaded to memory so it's the current
+        # code at beginning
+        assert app.info['version'] == "v1"
+        Application.info_collectors['version'].assert_called_once_with()
+
+        # .. but the current code versioL might change after application was
+        # loaded so the function might change it's value
+        assert app.info_collectors['version']() == "v2"
+
 
 if __name__ == '__main__':
     unittest.main()
