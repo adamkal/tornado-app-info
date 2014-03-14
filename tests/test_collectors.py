@@ -1,14 +1,9 @@
 """Collectors tests."""
-import os
 import unittest
 import unittest.mock
 from datetime import datetime
 
 from tornadoappinfo import collectors
-
-this_file = os.path.dirname(__file__)
-PROJECT_PATH = os.path.join(this_file, os.path.pardir)
-del this_file
 
 
 class CollectorsTestCase(unittest.TestCase):
@@ -22,6 +17,7 @@ class CollectorsTestCase(unittest.TestCase):
 
     @unittest.mock.patch("tornadoappinfo.collectors.Repository")
     def test_git_state(self, Repository):
+        PROJECT_PATH = "/dev/proj"
         repo = Repository.return_value
         repo.head.shorthand = "master"
         obj = repo.head.get_object.return_value
@@ -32,6 +28,7 @@ class CollectorsTestCase(unittest.TestCase):
 
         git_state = collectors.git_state(PROJECT_PATH)
         result = git_state()
+        Repository.assert_called_once_with(PROJECT_PATH)
 
         self.assertEqual(result['rev'], "abcd1234def")
         self.assertEqual(result['date'], "2014-02-02T02:02:02")
