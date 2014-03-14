@@ -8,4 +8,3 @@ class InfoHandler(RequestHandler):
 
     def get(self):
         self.write(json_encode(self.application.info))
-        self.finish()
