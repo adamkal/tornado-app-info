@@ -20,11 +20,14 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 setup(
     name='tornadoappinfo',
     version='0.1.0',
-    description='Python Boilerplate contains all the boilerplate you need to create a Python package.',
+    description=("Captures info about the state of application awhen "
+                 "application is loaded. That information might be useful to "
+                 "check which version of app is being used to serve the "
+                 "content"),
     long_description=readme + '\n\n' + history,
     author='Adam Kaliński',
     author_email='adamkalinski@gmail.com',
-    url='https://github.com/adamkal/tornadoappinfo',
+    url='https://github.com/adamkal/tornado-appi-nfo',
     packages=[
         'tornadoappinfo',
     ],
@@ -32,7 +35,7 @@ setup(
     include_package_data=True,
     install_requires=[
     ],
-    license="BSD",
+    license="MIT",
     zip_safe=False,
     keywords='tornadoappinfo',
     classifiers=[
@@ -40,9 +43,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
     ],
