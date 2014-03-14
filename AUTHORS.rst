@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* Adam Kaliński <adam.kalinski@gmail.com>
+* Adam Kaliński <adamkalinski@gmail.com>
 
 Contributors
 ------------

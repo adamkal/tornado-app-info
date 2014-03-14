@@ -2,6 +2,6 @@
 Usage
 ========
 
-To use Tornado Application Info in a project::
+To use Tornado App Info in a project::
 
-	import tornado-app-info
+	import tornadoappinfo

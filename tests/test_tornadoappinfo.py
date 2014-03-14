@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 
 """
-test_tornado-app-info
+test_tornadoappinfo
 ----------------------------------
 
-Tests for `tornado-app-info` module.
+Tests for `tornadoappinfo` module.
 """
 
 import unittest
 
-from tornado-app-info import tornado-app-info
+from tornadoappinfo import tornadoappinfo
 
 
-class TestTornado-app-info(unittest.TestCase):
+class TestTornadoappinfo(unittest.TestCase):
 
     def setUp(self):
         pass
