@@ -7,7 +7,7 @@ class VersionMixin(object):
     info_collectors = {}
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(VersionMixin, self).__init__(*args, **kwargs)
 
         self._collect_app_info()
 

@@ -15,20 +15,17 @@ class CollectorsTestCase(unittest.TestCase):
         value = collectors.app_load_time()
         self.assertEqual(value, "2014-01-01T01:01:01")
 
-    @unittest.mock.patch("tornadoappinfo.collectors.Repository")
-    def test_git_state(self, Repository):
-        PROJECT_PATH = "/dev/proj"
-        repo = Repository.return_value
-        repo.head.shorthand = "master"
-        obj = repo.head.get_object.return_value
-        obj.hex = "abcd1234def"
-        obj.commit_time = int(datetime(2014, 2, 2, 2, 2, 2).timestamp())
-        obj.message = "message"
-        obj.committer.name = "Kamilek"
+    @unittest.mock.patch("tornadoappinfo.collectors._head_info")
+    @unittest.mock.patch("tornadoappinfo.collectors._current_branch")
+    def test_git_state(self, current_branch, head_info):
+        current_branch.return_value = "master"
+        head_info.return_value = (
+            "abcd1234def",
+            "Kamilek",
+            "message",
+            int(datetime(2014, 2, 2, 2, 2, 2).timestamp()))
 
-        git_state = collectors.git_state(PROJECT_PATH)
-        result = git_state()
-        Repository.assert_called_once_with(PROJECT_PATH)
+        result = collectors.git_state()
 
         self.assertEqual(result['rev'], "abcd1234def")
         self.assertEqual(result['date'], "2014-02-02T02:02:02")
