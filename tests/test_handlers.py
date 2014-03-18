@@ -7,7 +7,7 @@ except ImportError:
     import mock
 
 from tornado.testing import AsyncHTTPTestCase
-from tornado.web import Application
+from tornado.web import Application, RequestHandler
 
 from tornadoappinfo.application import VersionMixin
 from tornadoappinfo.handlers import InfoHandler
@@ -21,6 +21,12 @@ class TestApp(VersionMixin, Application):
     }
 
 
+class FakeExternalInfoHandler(RequestHandler):
+
+    def get(self):
+        self.write(json.dumps({'version': 1}))
+
+
 class InfoHandlerTestCase(AsyncHTTPTestCase):
 
     def setUp(self):
@@ -29,9 +35,14 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
                                                               "12.12.2012")
         super(InfoHandlerTestCase, self).setUp()
 
+        TestApp.info_dependencies = {
+            'external_dep': self.get_url('/fake_external_info')
+        }
+
     def get_app(self):
         return TestApp([
             ('/info', InfoHandler),
+            ('/fake_external_info', FakeExternalInfoHandler),
         ])
 
     def test_get_info(self):
@@ -42,3 +53,4 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
 
         self.assertEqual(data['version'], "v1")
         self.assertEqual(data['deploy_time'], "11.11.2011")
+        self.assertEqual(data['dependencies']['external_dep'], {'version': 1})
