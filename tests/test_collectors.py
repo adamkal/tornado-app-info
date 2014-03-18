@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Collectors tests."""
 import unittest
 
@@ -47,3 +48,11 @@ class CollectorsTestCase(unittest.TestCase):
         self.assertEqual(result['message'], "message")
         self.assertEqual(result['author'], "Kamilek")
         self.assertEqual(result['branch'], "master")
+
+    @mock.patch("tornadoappinfo.collectors.subprocess")
+    def test__git(self, subprocess):
+        subprocess.check_output.return_value = "test"
+        self.assertEqual(collectors._git(), "test")
+
+        subprocess.check_output.return_value = six.u("ótest")
+        self.assertEqual(collectors._git(), six.u("ótest"))

@@ -30,13 +30,14 @@ def git_state():
 
 
 def _git(*args):
-    return subprocess.check_output(['git'] + list(args))
+    return subprocess.check_output(['git'] + list(args),
+                                   universal_newlines=True)
 
 
 def _head_info():
-    return _git('log', '--pretty=format:%H;%an;%s;%ct', '-1').decode().split(';')
+    return _git('log', '--pretty=format:%H;%an;%s;%ct', '-1').split(';')
 
 
 def _current_branch():
-    branches = _git('branch').decode().split()
+    branches = _git('branch').split()
     return branches[branches.index('*') + 1]
