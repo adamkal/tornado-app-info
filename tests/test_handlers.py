@@ -1,12 +1,11 @@
 """Test App Info handler."""
-import json
-
 try:
     from unittest import mock
 except ImportError:
     import mock
 
 from tornado.testing import AsyncHTTPTestCase
+from tornado.escape import json_decode, json_encode
 from tornado.web import Application, RequestHandler
 
 from tornadoappinfo.application import VersionMixin
@@ -24,7 +23,7 @@ class TestApp(VersionMixin, Application):
 class FakeExternalInfoHandler(RequestHandler):
 
     def get(self):
-        self.write(json.dumps({'version': 1}))
+        self.write(json_encode({'version': 1}))
 
 
 class InfoHandlerTestCase(AsyncHTTPTestCase):
@@ -49,8 +48,20 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
         self.http_client.fetch(self.get_url('/info'), self.stop)
         response = self.wait()
 
-        data = json.loads(response.body.decode())
+        data = json_decode(response.body)
 
         self.assertEqual(data['version'], "v1")
         self.assertEqual(data['deploy_time'], "11.11.2011")
         self.assertEqual(data['dependencies']['external_dep'], {'version': 1})
+
+    def test_get_info_failed_dep(self):
+        TestApp.info_dependencies['invalid'] = self.get_url('/invalid_url')
+        self.http_client.fetch(self.get_url('/info'), self.stop)
+        response = self.wait()
+
+        data = json_decode(response.body)
+
+        self.assertEqual(data['dependencies']['external_dep'],
+                         {'version': 1})
+        self.assertEqual(data['dependencies']['invalid']['code'], 404)
+        del TestApp.info_dependencies['invalid']

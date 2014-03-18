@@ -1,6 +1,6 @@
 """App Info handler."""
 from tornado.web import RequestHandler
-from tornado.httpclient import AsyncHTTPClient
+from tornado.httpclient import AsyncHTTPClient, HTTPError
 from tornado.escape import json_encode, json_decode
 from tornado import gen
 
@@ -16,10 +16,28 @@ class InfoHandler(RequestHandler):
         info = app.info
 
         if app.info_dependencies is not None:
-            dep_requests = {dep: self.client.fetch(url)
-                            for dep, url in app.info_dependencies.items()}
-            deps = yield dep_requests
-            deps = {dep: json_decode(resp.body) for dep, resp in deps.items()}
-            info['dependencies'] = deps
+            info['dependencies'] = yield self._get_dependencies()
 
         self.write(json_encode(info))
+
+    @gen.coroutine
+    def _get_dependencies(self):
+        app = self.application
+        deps = {}
+
+        dep_requests = {dep: self.client.fetch(url)
+                        for dep, url in app.info_dependencies.items()}
+
+        for dep, req in dep_requests.items():
+            try:
+                resp = yield req
+            except HTTPError as e:
+                resp = e.response
+                deps[dep] = {
+                    'code': resp.code,
+                    'error': resp.body.decode()
+                }
+            else:
+                deps[dep] = json_decode(resp.body)
+
+        raise gen.Return(deps)
