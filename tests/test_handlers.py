@@ -48,20 +48,40 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
         self.http_client.fetch(self.get_url('/info'), self.stop)
         response = self.wait()
 
+        self.assertEqual(response.code, 200)
         data = json_decode(response.body)
 
         self.assertEqual(data['version'], "v1")
         self.assertEqual(data['deploy_time'], "11.11.2011")
         self.assertEqual(data['dependencies']['external_dep'], {'version': 1})
 
-    def test_get_info_failed_dep(self):
-        TestApp.info_dependencies['invalid'] = self.get_url('/invalid_url')
+    def test_get_info_dep_404(self):
+        TestApp.info_dependencies['404'] = self.get_url('/invalid_url')
+
         self.http_client.fetch(self.get_url('/info'), self.stop)
         response = self.wait()
 
+        self.assertEqual(response.code, 200)
         data = json_decode(response.body)
 
         self.assertEqual(data['dependencies']['external_dep'],
                          {'version': 1})
-        self.assertEqual(data['dependencies']['invalid']['code'], 404)
-        del TestApp.info_dependencies['invalid']
+        self.assertEqual(data['dependencies']['404']['code'], 404)
+
+        del TestApp.info_dependencies['404']
+
+    def test_get_info_dep_wrong_url(self):
+        info_deps = TestApp.info_dependencies
+        info_deps['wrong_url'] = "http://thisdoesnotexist.wrong"
+
+        self.http_client.fetch(self.get_url('/info'), self.stop)
+        response = self.wait()
+
+        self.assertEqual(response.code, 200)
+        data = json_decode(response.body)
+
+        self.assertEqual(data['dependencies']['external_dep'],
+                         {'version': 1})
+        self.assertTrue(len(data['dependencies']['wrong_url']['error']))
+
+        del TestApp.info_dependencies['wrong_url']

@@ -31,12 +31,14 @@ class InfoHandler(RequestHandler):
         for dep, req in dep_requests.items():
             try:
                 resp = yield req
-            except HTTPError as e:
-                resp = e.response
+            except HTTPError as http_err:
+                resp = http_err.response
                 deps[dep] = {
                     'code': resp.code,
                     'error': resp.body.decode()
                 }
+            except Exception as err:
+                deps[dep] = {'error': str(err)}
             else:
                 deps[dep] = json_decode(resp.body)
 
