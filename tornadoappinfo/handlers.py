@@ -1,8 +1,16 @@
 """App Info handler."""
+
+import logging
+
+import six
 from tornado.web import RequestHandler
 from tornado.httpclient import AsyncHTTPClient, HTTPError
 from tornado.escape import json_encode, json_decode
 from tornado import gen
+
+str = six.text_type
+
+log = logging.getLogger('tornadoappinfo.handlers')
 
 
 class InfoHandler(RequestHandler):
@@ -14,8 +22,13 @@ class InfoHandler(RequestHandler):
     def get(self):
         app = self.application
         info = app.info
+        deps = app.info_dependencies
 
-        if app.info_dependencies is not None:
+        log.debug("Getting application information from {} collectors "
+                  "and {} dependent services.".format(len(app.info),
+                                                      len(deps or {})))
+
+        if deps is not None:
             info['dependencies'] = yield self._get_dependencies()
 
         self.write(json_encode(info))
@@ -25,19 +38,36 @@ class InfoHandler(RequestHandler):
         app = self.application
         deps = {}
 
-        dep_requests = {dep: self.client.fetch(url)
-                        for dep, url in app.info_dependencies.items()}
+        for dep, url in app.info_dependencies.items():
 
-        for dep, req in dep_requests.items():
+            log.info(
+                "Fetching info about '{}' service @ '{}'".format(dep, dep))
+
             try:
-                resp = yield req
+                resp = yield self.client.fetch(url)
             except HTTPError as http_err:
+
+                log.error(
+                    "Dependent service '{}' error @ '{}': {}"
+                    "".format(dep, url, http_err))
+
                 resp = http_err.response
-                deps[dep] = {
-                    'code': resp.code,
-                    'error': resp.body.decode()
-                }
+
+                if resp:
+                    deps[dep] = {
+                        'code': resp.code,
+                        'error': resp.body.decode()
+                    }
+                else:
+                    deps[dep] = {
+                        'error': str(http_err)
+                    }
             except Exception as err:
+
+                log.error(
+                    "Dependent service '{}' connection error @ '{}': {}"
+                    "".format(dep, url, err))
+
                 deps[dep] = {'error': str(err)}
             else:
                 deps[dep] = json_decode(resp.body)

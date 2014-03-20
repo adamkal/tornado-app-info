@@ -44,6 +44,11 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
             ('/fake_external_info', FakeExternalInfoHandler),
         ])
 
+    def assertStartsWith(self, string, prefix):
+        starts_with = string.startswith(prefix)
+        self.assertTrue(starts_with,
+                        "'{}' does not start with '{}'".format(string, prefix))
+
     def test_get_info(self):
         self.http_client.fetch(self.get_url('/info'), self.stop)
         response = self.wait()
@@ -55,8 +60,9 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
         self.assertEqual(data['deploy_time'], "11.11.2011")
         self.assertEqual(data['dependencies']['external_dep'], {'version': 1})
 
-    def test_get_info_dep_404(self):
-        TestApp.info_dependencies['404'] = self.get_url('/invalid_url')
+    @mock.patch('tornadoappinfo.handlers.log')
+    def test_get_info_dep_404(self, log):
+        TestApp.info_dependencies['404'] = url = self.get_url('/invalid_url')
 
         self.http_client.fetch(self.get_url('/info'), self.stop)
         response = self.wait()
@@ -67,12 +73,16 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
         self.assertEqual(data['dependencies']['external_dep'],
                          {'version': 1})
         self.assertEqual(data['dependencies']['404']['code'], 404)
+        args, kwargs = log.error.call_args
+        self.assertStartsWith(
+            args[0], "Dependent service '404' error @ '{}':".format(url))
 
         del TestApp.info_dependencies['404']
 
-    def test_get_info_dep_wrong_url(self):
+    @mock.patch('tornadoappinfo.handlers.log')
+    def test_get_info_dep_wrong_url(self, log):
         info_deps = TestApp.info_dependencies
-        info_deps['wrong_url'] = "http://thisdoesnotexist.wrong"
+        info_deps['wrong_url'] = url = "http://thisdoesnotexist.wrong"
 
         self.http_client.fetch(self.get_url('/info'), self.stop)
         response = self.wait()
@@ -83,5 +93,8 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
         self.assertEqual(data['dependencies']['external_dep'],
                          {'version': 1})
         self.assertTrue(len(data['dependencies']['wrong_url']['error']))
+        args, kwargs = log.error.call_args
+        self.assertStartsWith(
+            args[0], "Dependent service 'wrong_url' connection error @ '{}':".format(url))
 
         del TestApp.info_dependencies['wrong_url']
