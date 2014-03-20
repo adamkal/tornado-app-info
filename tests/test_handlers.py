@@ -35,8 +35,12 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
         super(InfoHandlerTestCase, self).setUp()
 
         TestApp.info_dependencies = {
-            'external_dep': self.get_url('/fake_external_info')
+            'external_dep': self._ext_url
         }
+
+    @property
+    def _ext_url(self):
+        return self.get_url('/fake_external_info')
 
     def get_app(self):
         return TestApp([
@@ -58,43 +62,58 @@ class InfoHandlerTestCase(AsyncHTTPTestCase):
 
         self.assertEqual(data['version'], "v1")
         self.assertEqual(data['deploy_time'], "11.11.2011")
-        self.assertEqual(data['dependencies']['external_dep'], {'version': 1})
+
+        external_dep = data['dependencies']['external_dep']
+        self.assertEqual(external_dep['version'], 1)
+        self.assertEqual(external_dep['url'], self._ext_url)
 
     @mock.patch('tornadoappinfo.handlers.log')
     def test_get_info_dep_404(self, log):
-        TestApp.info_dependencies['404'] = url = self.get_url('/invalid_url')
+        invalid_url = self.get_url('/invalid_url')
+        TestApp.info_dependencies['404'] = invalid_url
+        info_url = self.get_url('/info')
 
-        self.http_client.fetch(self.get_url('/info'), self.stop)
+        self.http_client.fetch(info_url, self.stop)
         response = self.wait()
 
         self.assertEqual(response.code, 200)
         data = json_decode(response.body)
 
-        self.assertEqual(data['dependencies']['external_dep'],
-                         {'version': 1})
-        self.assertEqual(data['dependencies']['404']['code'], 404)
+        dependencies = data['dependencies']
+        self.assertEqual(dependencies['external_dep']['version'], 1)
+        self.assertEqual(dependencies['external_dep']['url'], self._ext_url)
+        self.assertEqual(dependencies['404']['code'], 404)
+        self.assertEqual(dependencies['404']['url'], invalid_url)
+
         args, kwargs = log.error.call_args
         self.assertStartsWith(
-            args[0], "Dependent service '404' error @ '{}':".format(url))
+            args[0],
+            "Dependent service '404' error @ '{}':".format(invalid_url))
 
         del TestApp.info_dependencies['404']
 
     @mock.patch('tornadoappinfo.handlers.log')
     def test_get_info_dep_wrong_url(self, log):
         info_deps = TestApp.info_dependencies
-        info_deps['wrong_url'] = url = "http://thisdoesnotexist.wrong"
+        wrong_url = info_deps['wrong_url'] = "http://thisdoesnotexist.wrong"
+        info_url = self.get_url('/info')
 
-        self.http_client.fetch(self.get_url('/info'), self.stop)
+        self.http_client.fetch(info_url, self.stop)
         response = self.wait()
 
         self.assertEqual(response.code, 200)
         data = json_decode(response.body)
 
-        self.assertEqual(data['dependencies']['external_dep'],
-                         {'version': 1})
-        self.assertTrue(len(data['dependencies']['wrong_url']['error']))
+        dependencies = data['dependencies']
+        self.assertEqual(dependencies['external_dep']['version'], 1)
+        self.assertEqual(dependencies['external_dep']['url'], self._ext_url)
+        self.assertTrue(len(dependencies['wrong_url']['error']))
+        self.assertEqual(dependencies['wrong_url']['url'], wrong_url)
+
         args, kwargs = log.error.call_args
         self.assertStartsWith(
-            args[0], "Dependent service 'wrong_url' connection error @ '{}':".format(url))
+            args[0],
+            "Dependent service 'wrong_url' connection error @ '{}':"
+            "".format(wrong_url))
 
         del TestApp.info_dependencies['wrong_url']

@@ -71,5 +71,6 @@ class InfoHandler(RequestHandler):
                 deps[dep] = {'error': str(err)}
             else:
                 deps[dep] = json_decode(resp.body)
-
+            finally:
+                deps[dep]['url'] = url
         raise gen.Return(deps)
